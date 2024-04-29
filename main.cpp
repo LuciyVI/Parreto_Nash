@@ -4,6 +4,8 @@
 #include <random>
 #include <boost/format.hpp>
 
+#include </usr/include/termocolor/termcolor.hpp>
+
 
 using Eigen::MatrixXd;
 
@@ -75,7 +77,7 @@ class Strategy {
 
         Eigen::MatrixXd M;
 
-        Strategy() : M(10,10) {
+        Strategy(int N) : M(N,N) {
 
         
         
@@ -96,12 +98,92 @@ class Strategy {
     }
 };
 
+void biMatrix_random(){
+    
+    Strategy  biMatrix1(2);
+    Strategy  biMatrix2(2);
 
+    std::cout<< "Игрок 1 :  \n" << biMatrix1 <<"\n"<<std::endl;
+
+    std::cout<< "Игрок 2 :  \n" << biMatrix2 <<"\n"<<std::endl;
+
+}
+void biMatrix(){
+    
+    Eigen::MatrixXd One(2,2);
+    Eigen::MatrixXd Two(2,2);
+
+    One << 5,8,7,6;
+    Two << 0,4,6,3;
+
+    std::cout<<termcolor::red<<"\n-----{First static Matrix}----- \n"<<std::endl;
+    std::cout<<One<<std::endl; 
+    std::cout<<termcolor::blue<<"\n-----{Second static Matrix}-----\n"<<std::endl;
+    std::cout<<Two<<std::endl;
+    std::cout<<termcolor::white<<std::endl; 
+
+    std::cout<<termcolor::red<<"\n-----{Nash for First Matrix}----- \n"<<termcolor::white<<std::endl;
+    
+    for(int i=0;i<2;i++)
+    {  
+        
+        std::cout<<termcolor::red<<One.col(i).maxCoeff()<<termcolor::white<<std::endl;
+        
+
+    }
+    std::cout<<termcolor::blue<<"\n-----{Nash for Second Matrix}-----\n"<<std::endl;
+    
+    for(int i=0;i<2;i++)
+    {  
+        
+        std::cout<<termcolor::blue<<Two.row(i).maxCoeff()<<termcolor::white<<std::endl;
+        
+
+    }
+
+    Eigen::Vector2i U(2);
+    U<<1,1;
+    
+    Eigen::MatrixXd inverse_One = One.inverse();
+    Eigen::MatrixXd inverse_Two = Two.inverse();
+    
+    double v1,v2,x,y=0;
+    
+    for(int i=0;i<inverse_One.cols();i++)
+    { 
+        for(int j=0;j<inverse_One.cols();j++){
+    
+        v1 += 1 / (U(i)*inverse_One(i,j)*U(i));
+        y += v1*U(i)*inverse_One(i,j); 
+        }
+    }
+    for(int i=0;i<inverse_Two.cols();i++)
+    { 
+        for(int j=0;j<inverse_Two.cols();j++){
+        if(inverse_Two(i,j)!=0){  
+
+            v2 += 1 / (U(i)*inverse_Two(i,j)*U(i));
+            x += v2*U(i)*inverse_Two(i,j); 
+        
+        }else{
+            continue;
+        }
+        }
+    }
+
+    std::cout<<"v1 : "<<v1<<std::endl;
+    std::cout<<"v2 : "<<v2<<std::endl;
+    std::cout<<"x : "<<x<<std::endl;
+    std::cout<<"y : "<<y<<std::endl;
+    
+
+
+}
 
 int main() {
    
-    Strategy player1;
-    Strategy player2;
+    Strategy player1(10);
+    Strategy player2(10);
 
     std::cout<< "Игрок 1 :  \n" << player1 <<"\n"<<std::endl;
 
@@ -126,6 +208,8 @@ int main() {
 
     Parreto(player1.M,player2.M);
  
+    biMatrix();    
+    
     return 0;
 
 }
