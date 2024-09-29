@@ -91,7 +91,7 @@ vector<pair<int, int>> Pareto(const pair<MatrixXd, MatrixXd>& matrix) {
     return Paretos;
 }
 
-// Function to print the matrices
+// Function to print the matrices and results
 void Print_Matrix(const pair<MatrixXd, MatrixXd>& matrix, const vector<pair<int, int>>& Nashes, const vector<pair<int, int>>& Paretos) {
     int N = matrix.first.rows();
 
@@ -155,6 +155,30 @@ void Print_Matrix(const pair<MatrixXd, MatrixXd>& matrix, const vector<pair<int,
     }
 }
 
+// Function to implement the Prisoner's Dilemma
+void Prisoners_Dilemma() {
+    cout << "\n\n\n----------------------------------------------------------------\n\n\n";
+    cout << "Дилемма заключенного:\n";
+    
+    // Payoff matrix for the Prisoner's Dilemma
+    MatrixXd A(2, 2);
+    MatrixXd B(2, 2);
+    
+    // Fill the payoff matrices (A: Player 1, B: Player 2)
+    A << -1, -3,
+         0, -2; // Payoffs for Player 1
+         
+    B << -1, 0,
+         -3, -2; // Payoffs for Player 2
+
+    cout << "Матрица Игрока 1:\n" << A << endl;
+    cout << "Матрица Игрока 2:\n" << B << endl;
+
+    auto Nashes = Nash(make_pair(A, B));
+    auto Paretos = Pareto(make_pair(A, B));
+    Print_Matrix(make_pair(A, B), Nashes, Paretos);
+}
+
 int main() {
     cout << "\n\n\n----------------------------------------------------------------\n\n\n";
     cout << "Случайная матрица 10x10:\n";
@@ -166,6 +190,8 @@ int main() {
     auto Nashes = Nash(matrix);
     auto Paretos = Pareto(matrix);
     Print_Matrix(matrix, Nashes, Paretos);
+
+    Prisoners_Dilemma();
 
     cout << "\n\n\n----------------------------------------------------------------\n\n\n";
     cout << "Перекресток\n";
