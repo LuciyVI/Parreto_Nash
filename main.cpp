@@ -1,215 +1,183 @@
-
 #include <iostream>
 #include <Eigen/Dense>
 #include <random>
-#include <boost/format.hpp>
+#include <vector>
+#include <iomanip>
 
-#include </usr/include/termocolor/termcolor.hpp>
-
-
+using namespace std;
 using Eigen::MatrixXd;
 
+// Function to generate two random matrices
+pair<MatrixXd, MatrixXd> Generate_Matrix() {
+    random_device rd;
+    mt19937 gen(rd());
+    uniform_int_distribution<int> dis(-100, 100);
 
-int getRandomNumber(int min, int max) {
-    std::random_device rd; // Используем устройство случайных чисел в качестве источника энтропии
-    std::mt19937 gen(rd()); // Используем генератор случайных чисел Mersenne Twister
-    std::uniform_int_distribution<int> dis(min, max); // Создаем распределение для целых чисел в заданном диапазоне
+    MatrixXd A(10, 10);
+    MatrixXd B(10, 10);
     
-    return dis(gen); // Возвращаем случайное число
-}
-
-int Nash(Eigen::MatrixXd first, Eigen::MatrixXd second )
-{   
-
-    std::cout<<"\t{   Nash    }"<<std::endl;
-    Eigen::VectorXi maxIndices2(first.cols());
-    Eigen::VectorXi maxIndices1(first.cols());
-    for(int i=0;i<first.cols();i++){
-
-
-        int maxVal1 = first.col(i).maxCoeff();
-        
-        int maxVal2 = second.row(i).maxCoeff();
-        
-        for(int j=0;j<second.cols();j++)
-        { 
-        
-        if (first(j, i) == maxVal1 && second(j,i) == maxVal2) {
-                
-                std::cout<<"\nNash : i j =  "<<i<<"  "<<j<<"  "<<first(j,i)<<"   "<<second(j,i)<<std::endl;
-            
-                
-            }
-        
+    for (int i = 0; i < 10; ++i) {
+        for (int j = 0; j < 10; ++j) {
+            A(i, j) = dis(gen);
+            B(i, j) = dis(gen);
         }
-            
     }
-    
-    return 0;
+    return make_pair(A, B);
 }
 
-void Parreto(Eigen::MatrixXd first, Eigen::MatrixXd second){
- 
-    std::cout<<"\n \t{   Parreto   }\n"<<std::endl;
+// Function to find Nash equilibria
+vector<pair<int, int>> Nash(const pair<MatrixXd, MatrixXd>& matrix) {
+    int N = matrix.first.rows();
+    vector<pair<int, int>> Nashes;
 
-    
-    for(int i = 0; i < first.cols() - 1; i++){
-        
-        int maxVal1 = first.col(i).maxCoeff(); 
-
-        
-        int maxVal2 = second.row(i).maxCoeff();
-
-        
-        for(int j = 0; j < second.cols() - 1; j++){
-            
-            if (first(j, i) == maxVal1 && second(i, j) == maxVal2) {
-                std::cout<<"i : "<<i<<" j :"<<j<<" First: "<<first(i,j)<<"  Second:"<<second(i,j)<<"\n"<<std::endl; 
-            }
-        }   
-    }
-}
-
-
-class Strategy {
-
-    public:
-
-        Eigen::MatrixXd M;
-
-        Strategy(int N) : M(N,N) {
-
-        
-        
-        for (int i = 0; i < M.rows(); ++i) {
-            for (int j = 0; j < M.cols(); ++j) {
-                M(i, j) = getRandomNumber(1,100); // Заполняем матрицу значениями
+    vector<pair<int, int>> A_Player(N);
+    for (int j = 0; j < N; ++j) {
+        double cur_Max = -101;
+        pair<int, int> cur_Index;
+        for (int i = 0; i < N; ++i) {
+            if (matrix.first(i, j) > cur_Max) {
+                cur_Max = matrix.first(i, j);
+                cur_Index = {i, j};
             }
         }
-        
-      
- 
-        }
-    
-    friend std::ostream& operator<<(std::ostream& os, const Strategy& obj) {
-        os << obj.M;
-        
-        return os;
+        A_Player[j] = cur_Index;
     }
-};
 
-void biMatrix_random(){
+    vector<pair<int, int>> B_Player(N);
+    for (int i = 0; i < N; ++i) {
+        double cur_Max = -101;
+        pair<int, int> cur_Index;
+        for (int j = 0; j < N; ++j) {
+            if (matrix.second(i, j) > cur_Max) {
+                cur_Max = matrix.second(i, j);
+                cur_Index = {i, j};
+            }
+        }
+        B_Player[i] = cur_Index;
+    }
+
+    for (const auto& element : A_Player) {
+        if (find(B_Player.begin(), B_Player.end(), element) != B_Player.end()) {
+            Nashes.push_back(element);
+        }
+    }
     
-    Strategy  biMatrix1(2);
-    Strategy  biMatrix2(2);
-
-    std::cout<< "Игрок 1 :  \n" << biMatrix1 <<"\n"<<std::endl;
-
-    std::cout<< "Игрок 2 :  \n" << biMatrix2 <<"\n"<<std::endl;
-
+    return Nashes;
 }
-void biMatrix(){
-    
-    Eigen::MatrixXd One(2,2);
-    Eigen::MatrixXd Two(2,2);
 
-    One << 5,8,7,6;
-    Two << 0,4,6,3;
+// Function to find Pareto optimal points
+vector<pair<int, int>> Pareto(const pair<MatrixXd, MatrixXd>& matrix) {
+    int N = matrix.first.rows();
+    vector<pair<int, int>> Paretos;
 
-    std::cout<<termcolor::red<<"\n-----{First static Matrix}----- \n"<<std::endl;
-    std::cout<<One<<std::endl; 
-    std::cout<<termcolor::blue<<"\n-----{Second static Matrix}-----\n"<<std::endl;
-    std::cout<<Two<<std::endl;
-    std::cout<<termcolor::white<<std::endl; 
-
-    std::cout<<termcolor::red<<"\n-----{Nash for First Matrix}----- \n"<<termcolor::white<<std::endl;
-    
-    for(int i=0;i<2;i++)
-    {  
-        
-        std::cout<<termcolor::red<<One.col(i).maxCoeff()<<termcolor::white<<std::endl;
-        
-
-    }
-    std::cout<<termcolor::blue<<"\n-----{Nash for Second Matrix}-----\n"<<std::endl;
-    
-    for(int i=0;i<2;i++)
-    {  
-        
-        std::cout<<termcolor::blue<<Two.row(i).maxCoeff()<<termcolor::white<<std::endl;
-        
-
-    }
-
-    Eigen::Vector2i U(2);
-    U<<1,1;
-    
-    Eigen::MatrixXd inverse_One = One.inverse();
-    Eigen::MatrixXd inverse_Two = Two.inverse();
-    
-    double v1,v2,x,y=0;
-    
-    for(int i=0;i<inverse_One.cols();i++)
-    { 
-        for(int j=0;j<inverse_One.cols();j++){
-    
-        v1 += 1 / (U(i)*inverse_One(i,j)*U(i));
-        y += v1*U(i)*inverse_One(i,j); 
+    for (int i = 0; i < N; ++i) {
+        for (int j = 0; j < N; ++j) {
+            bool flag = true;
+            for (int k = 0; k < N; ++k) {
+                for (int z = 0; z < N; ++z) {
+                    if (k == i && z == j) continue;
+                    if (matrix.first(k, z) > matrix.first(i, j) &&
+                        matrix.second(k, z) > matrix.second(i, j)) {
+                        flag = false;
+                    }
+                }
+            }
+            if (flag) {
+                Paretos.push_back({i, j});
+            }
         }
     }
-    for(int i=0;i<inverse_Two.cols();i++)
-    { 
-        for(int j=0;j<inverse_Two.cols();j++){
-        if(inverse_Two(i,j)!=0){  
+    
+    return Paretos;
+}
 
-            v2 += 1 / (U(i)*inverse_Two(i,j)*U(i));
-            x += v2*U(i)*inverse_Two(i,j); 
-        
-        }else{
-            continue;
+// Function to print the matrices
+void Print_Matrix(const pair<MatrixXd, MatrixXd>& matrix, const vector<pair<int, int>>& Nashes, const vector<pair<int, int>>& Paretos) {
+    int N = matrix.first.rows();
+
+    cout << "\n" << string(50, '-') << endl;
+    cout << setw(10) << " " << setw(15) << "Игрок 1" << setw(15) << "Игрок 2" << endl;
+    cout << setw(10) << " " << string(15, '-') << string(15, '-') << endl;
+
+    for (int i = 0; i < N; ++i) {
+        cout << setw(10) << "Стратегия " << i + 1 << ": ";
+        for (int j = 0; j < N; ++j) {
+            string prefix = "  ";
+            if (find(Nashes.begin(), Nashes.end(), make_pair(i, j)) != Nashes.end() &&
+                find(Paretos.begin(), Paretos.end(), make_pair(i, j)) != Paretos.end()) {
+                prefix = "НП";  // Nash-Pareto
+            } else if (find(Nashes.begin(), Nashes.end(), make_pair(i, j)) != Nashes.end()) {
+                prefix = "Н ";  // Nash
+            } else if (find(Paretos.begin(), Paretos.end(), make_pair(i, j)) != Paretos.end()) {
+                prefix = "П";  // Pareto
+            }
+
+            cout << prefix << setw(5) << matrix.first(i, j) << " / " << setw(5) << matrix.second(i, j) << "  ";
         }
+        cout << endl;
+    }
+
+    // Print Nash equilibria
+    if (!Nashes.empty()) {
+        cout << "\nРавновесие по Нэшу:\n";
+        for (const auto& elem : Nashes) {
+            cout << "(" << elem.first + 1 << ", " << elem.second + 1 << ") "
+                 << matrix.first(elem.first, elem.second) << " / "
+                 << matrix.second(elem.first, elem.second) << endl;
         }
     }
 
-    std::cout<<"v1 : "<<v1<<std::endl;
-    std::cout<<"v2 : "<<v2<<std::endl;
-    std::cout<<"x : "<<x<<std::endl;
-    std::cout<<"y : "<<y<<std::endl;
-    
+    // Print Pareto optimal points
+    if (!Paretos.empty()) {
+        cout << "\nОптимальность по Парето:\n";
+        for (const auto& elem : Paretos) {
+            cout << "(" << elem.first + 1 << ", " << elem.second + 1 << ") "
+                 << matrix.first(elem.first, elem.second) << " / "
+                 << matrix.second(elem.first, elem.second) << endl;
+        }
+    }
 
+    // Print intersections
+    vector<pair<int, int>> Intersections;
+    for (const auto& elem : Nashes) {
+        if (find(Paretos.begin(), Paretos.end(), elem) != Paretos.end()) {
+            Intersections.push_back(elem);
+        }
+    }
 
+    if (!Intersections.empty()) {
+        cout << "\nПересечение множеств Нэша и Парето:\n";
+        for (const auto& elem : Intersections) {
+            cout << "(" << elem.first + 1 << ", " << elem.second + 1 << ") "
+                 << matrix.first(elem.first, elem.second) << " / "
+                 << matrix.second(elem.first, elem.second) << endl;
+        }
+    }
 }
 
 int main() {
-   
-    Strategy player1(10);
-    Strategy player2(10);
-
-    std::cout<< "Игрок 1 :  \n" << player1 <<"\n"<<std::endl;
-
-    std::cout<< "Игрок 2 :  \n" << player2 <<"\n"<<std::endl;
+    cout << "\n\n\n----------------------------------------------------------------\n\n\n";
+    cout << "Случайная матрица 10x10:\n";
     
+    auto matrix = Generate_Matrix();
+    cout << "Матрица Игрока 1:\n" << matrix.first << endl;
+    cout << "Матрица Игрока 2:\n" << matrix.second << endl;
 
-    std::cout<<"\n(𝐴, 𝐵)\n"<<std::endl;
+    auto Nashes = Nash(matrix);
+    auto Paretos = Pareto(matrix);
+    Print_Matrix(matrix, Nashes, Paretos);
 
-    for(int i=0 ;i<player1.M.cols();i++){
-    
+    cout << "\n\n\n----------------------------------------------------------------\n\n\n";
+    cout << "Перекресток\n";
+    matrix = { (MatrixXd(2, 2) << 2, 1, 3, 0).finished(), (MatrixXd(2, 2) << 2, 3, 1, 0).finished() };
+    cout << "Матрица Игрока 1:\n" << matrix.first << endl;
+    cout << "Матрица Игрока 2:\n" << matrix.second << endl;
 
-        for(int j = 0;j<player1.M.rows();j++){
+    Nashes = Nash(matrix);
+    Paretos = Pareto(matrix);
+    Print_Matrix(matrix, Nashes, Paretos);
 
-    
-                std::cout << boost::format("%-4d%-4d%-4d%-4d%-4d") %"|"%(player1.M(i,j))%"/"%(player2.M(i,j))%"|";
+    cout << "\n\n\n----------------------------------------------------------------\n\n\n";
 
-        }
-        std::cout<<"\n"<<std::endl;
-    }
-
-    Nash(player1.M,player2.M);
-
-    Parreto(player1.M,player2.M);
- 
-    biMatrix();    
-    
     return 0;
-
 }
